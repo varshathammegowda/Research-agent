@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.venv/
+
+# Environment variables / API keys
+.env
+*.env
+
+# ChromaDB
+data/chroma/
+backend/data/chroma/
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Vite build
+dist/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
