@@ -398,10 +398,4 @@ Generative AI + RAG + Academic Search + Agentic AI
 
 `backend/agent/research_agent.py` runs a five-turn maximum decision loop. Gemini returns a Pydantic-validated action from a fixed allowlist; Python executes the action and records a short status and result in request-scoped state. The agent can search OpenAlex, inspect selected metadata, retrieve and index an available open PDF, query local semantic evidence, or finish. The existing GET `/research-agent?query=...` remains supported. A JSON `POST /api/research` endpoint accepts `{"query":"..."}` and returns the answer, papers, sources, actions, and plan. The UI shows recorded status summaries, not hidden reasoning. The endpoint is synchronous, so the action list appears after the run completes.
 
-## Interview questions
 
-1. What makes this workflow agentic compared with a fixed RAG pipeline?
-2. How does Gemini select a tool, and how are its actions validated?
-3. What state is carried between decisions, and why is it request-scoped?
-4. How does the system ground its answer in retrieved evidence?
-5. How do the iteration limit and tool error handling prevent an uncontrolled workflow?
