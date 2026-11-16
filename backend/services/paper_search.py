@@ -169,6 +169,8 @@ def search_openalex(
 
                     papers.append({
 
+                        "openalex_id": work.get("id"),
+
                         "title": title,
 
                         "authors": authors,
@@ -180,6 +182,8 @@ def search_openalex(
                         "abstract": abstract,
 
                         "url": url,
+
+                        "pdf_url": ((work.get("best_oa_location") or {}).get("pdf_url")),
 
                         "source": "OpenAlex"
 

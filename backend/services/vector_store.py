@@ -1,4 +1,5 @@
 import chromadb
+import hashlib
 
 
 client = chromadb.PersistentClient(
@@ -11,17 +12,16 @@ collection = client.get_or_create_collection(
 )
 
 
-def store_chunks(chunks, embeddings):
+def store_chunks(chunks, embeddings, source="local document"):
 
-    ids = [
-        f"chunk_{i}"
-        for i in range(len(chunks))
-    ]
+    ids = [hashlib.sha256(f"{source}:{i}:{chunk[:80]}".encode()).hexdigest()
+           for i, chunk in enumerate(chunks)]
 
-    collection.add(
+    collection.upsert(
         ids=ids,
         documents=chunks,
-        embeddings=embeddings.tolist()
+        embeddings=embeddings.tolist(),
+        metadatas=[{"source": source} for _ in chunks],
     )
 
 

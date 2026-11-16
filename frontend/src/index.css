@@ -107,6 +107,18 @@ main {
   margin-bottom: 30px;
 }
 
+.agent-panel {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.agent-panel h2 { margin: 0 0 12px; color: #172554; }
+.agent-panel p { margin: 6px 0; }
+.agent-actions { margin: 12px 0 0; padding-left: 22px; color: #334155; }
+.agent-actions li { margin: 6px 0; }
+
 .spinner {
   width: 35px;
   height: 35px;
