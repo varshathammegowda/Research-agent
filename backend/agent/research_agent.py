@@ -4,7 +4,6 @@ import logging
 
 from pydantic import ValidationError
 
-from services.query_validator import validate_query, INVALID_QUERY_MESSAGE
 from .prompts import DECISION_PROMPT, SYNTHESIS_PROMPT
 from .schemas import AgentDecision, ResearchState
 from . import tools
@@ -33,14 +32,6 @@ def _decision(client, state: ResearchState) -> AgentDecision:
 
 def run(client, query: str) -> dict:
     state = ResearchState(query=query)
-    _status(state, "Validating research question")
-    validation = validate_query(query, client)
-    if not validation.get("valid"):
-        return {"success": False, "query": query,
-                "error": ("Query validation is temporarily unavailable. Please try again shortly."
-                          if validation.get("error") else INVALID_QUERY_MESSAGE),
-                "papers": [], "sources": [], "agent_actions": state.actions}
-
     state.objective = query.strip()
     state.plan = ["Find relevant papers", "Retrieve available research evidence", "Synthesize a cited answer"]
     _status(state, "Planning research")
