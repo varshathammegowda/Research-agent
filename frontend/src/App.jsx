@@ -4,7 +4,6 @@ function App() {
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState("");
   const [papers, setPapers] = useState([]);
-  const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,13 +17,9 @@ function App() {
     setError("");
     setAnswer("");
     setPapers([]);
-    setActions([]);
 
     try {
-      // IMPORTANT:
-      // We use /api instead of directly calling port 8000.
-      // Vite will proxy this request to FastAPI.
-      const url = `/api/research-agent?query=${encodeURIComponent(
+      const url = `https://research-agent-2-nkxh.onrender.com/research-agent?query=${encodeURIComponent(
         query
       )}`;
 
@@ -62,7 +57,6 @@ function App() {
 
       setAnswer(data.answer || "");
       setPapers(data.papers || []);
-      setActions(data.agent_actions || []);
     } catch (err) {
       console.error("Research request error:", err);
 
@@ -87,21 +81,6 @@ function App() {
       </header>
 
       <main>
-        {(loading || actions.length > 0) && (
-          <section className="agent-panel" aria-live="polite">
-            <h2>Research Agent</h2>
-            <p><strong>Question:</strong> {query}</p>
-            <p><strong>Status:</strong> {loading ? "Research in progress" : "Research complete"}</p>
-            <ol className="agent-actions">
-              {actions.map((item, index) => (
-                <li key={`${item.status}-${index}`}>
-                  {item.status}{item.tool ? ` · ${item.tool}` : ""}
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-
         {/* SEARCH */}
         <div className="search-box">
           <input
