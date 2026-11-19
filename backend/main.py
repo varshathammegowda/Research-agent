@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from services.paper_search import search_papers
-from services.agent_service import run_research_agent, client
-from services.query_validator import validate_query, INVALID_QUERY_MESSAGE
+from services.agent_service import run_research_agent
 
 
 app = FastAPI(
@@ -32,27 +31,6 @@ def home():
 
 @app.get("/research")
 def research(query: str):
-    validation = validate_query(query, client)
-    if not validation.get("valid"):
-        if validation.get("error"):
-            return {
-                "query": query,
-                "result": {
-                    "success": False,
-                    "error": (
-                        "Query validation is temporarily unavailable. "
-                        "Please try again shortly."
-                    ),
-                },
-            }
-        return {
-            "query": query,
-            "result": {
-                "success": False,
-                "answer": INVALID_QUERY_MESSAGE,
-                "papers": [],
-            },
-        }
     result = search_papers(query)
 
     return {
