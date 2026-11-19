@@ -5,7 +5,7 @@ Allowed actions: search_papers, get_paper_details, retrieve_pdf, extract_pdf_tex
 Use search_papers first. When papers are found and no PDF has been indexed, choose retrieve_pdf (paper_index, from 0) to ingest an available open PDF. Choose retrieve_relevant_content for local PDF evidence.
 Do not repeat an action that has already returned results unless a new query is needed.
 Finish when available evidence is enough, or when no useful tools remain. Do not reveal private reasoning.
-Return JSON only: {"action":"...","reason":"short user-safe status","arguments":{"query":"..."}}.
+Return JSON only: {{"action":"...","reason":"short user-safe status","arguments":{{"query":"..."}}}}.
 
 Query: {query}
 Objective: {objective}
