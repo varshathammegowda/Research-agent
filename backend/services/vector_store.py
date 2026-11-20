@@ -6,7 +6,7 @@ from pathlib import Path
 
 import chromadb
 
-from services.timing import measure_stage
+from services.timing import log_process_rss, measure_stage
 
 
 CHROMA_PATH = Path(
@@ -18,6 +18,7 @@ CHROMA_PATH.mkdir(parents=True, exist_ok=True)
 client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 collection = client.get_or_create_collection(name="research_papers")
 processed_papers = client.get_or_create_collection(name="processed_papers")
+log_process_rss("after_chroma_initialization")
 
 
 def is_paper_indexed(paper_id, legacy_source=None, request_id="unknown"):

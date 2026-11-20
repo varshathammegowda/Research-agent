@@ -170,6 +170,14 @@ def retrieve_papers(papers: list[dict], request_id: str = "unknown", query_embed
 
 def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embedding) -> dict:
     """Download, extract, and index an open PDF; report cleanly when unavailable."""
+    paper_started = time.perf_counter()
+    safe_paper_id = hashlib.sha256(paper_id.encode()).hexdigest()[:10]
+    log_process_rss(
+        "paper_start",
+        request_id,
+        paper_id=safe_paper_id,
+        elapsed_seconds="0.000",
+    )
     pdf_url = paper.get("pdf_url")
     title = paper.get("title") or ""
     metrics = {
@@ -203,10 +211,22 @@ def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embe
                 result["retrieved_chunks"] = _format_chunks(
                     search_chunks(query_embedding, top_k=5, request_id=request_id, source=title)
                 )
+        log_process_rss(
+            "paper_cleanup",
+            request_id,
+            paper_id=safe_paper_id,
+            elapsed_seconds=f"{time.perf_counter() - paper_started:.3f}",
+        )
         return result
     clear_incomplete_paper(paper_id, request_id=request_id)
     if not pdf_url:
         logger.info("[DIAG][%s] PDF unavailable title=%r pdf_url_exists=false", request_id, title)
+        log_process_rss(
+            "paper_cleanup",
+            request_id,
+            paper_id=safe_paper_id,
+            elapsed_seconds=f"{time.perf_counter() - paper_started:.3f}",
+        )
         return {"success": False, "error": "No open PDF URL is available.", **metrics}
     with measure_stage("PDF memory slot wait", request_id):
         _PAPER_PROCESSING_LIMIT.acquire()
@@ -242,6 +262,12 @@ def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embe
                 block = None
         response.close()
         response = None
+        log_process_rss(
+            "after_pdf_download",
+            request_id,
+            paper_id=safe_paper_id,
+            elapsed_seconds=f"{time.perf_counter() - paper_started:.3f}",
+        )
         if bytes(pdf_header) != b"%PDF":
             logger.warning("[DIAG][%s] PDF download failed reason=invalid_pdf_response", request_id)
             return {"success": False, "error": "The publisher URL did not return a valid PDF.", **metrics}
@@ -252,7 +278,12 @@ def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embe
         text = extract_text_from_pdf(path, request_id=request_id)
         metrics["pdf_parsed"] = True
         logger.info("[DIAG][%s] PyMuPDF parsed extracted_characters=%d", request_id, len(text))
-        log_process_rss("after_pdf_extraction", request_id)
+        log_process_rss(
+            "after_pdf_extraction",
+            request_id,
+            paper_id=safe_paper_id,
+            elapsed_seconds=f"{time.perf_counter() - paper_started:.3f}",
+        )
 
         stage = "chunking"
         chunks = chunk_text(text, request_id=request_id)
@@ -266,10 +297,15 @@ def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embe
         log_process_rss("before_paper_embedding", request_id)
         source = paper.get("title") or "Research paper"
         chunk_offset = 0
+        batch_index = 0
         while chunks:
             batch_chunks = chunks[:PAPER_EMBED_BATCH_SIZE]
             del chunks[:PAPER_EMBED_BATCH_SIZE]
-            batch_vectors = create_embeddings(batch_chunks, request_id=request_id)
+            batch_vectors = create_embeddings(
+                batch_chunks,
+                request_id=request_id,
+                diagnostic_fields={"paper_id": safe_paper_id, "batch": batch_index},
+            )
             metrics["embeddings_generated"] += len(batch_vectors)
             store_chunks(
                 batch_chunks,
@@ -284,6 +320,13 @@ def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embe
             chunk_offset += len(batch_chunks)
             batch_chunks = None
             batch_vectors = None
+            log_process_rss(
+                "after_embedding_batch_cleanup",
+                request_id,
+                paper_id=safe_paper_id,
+                batch=batch_index,
+            )
+            batch_index += 1
 
         mark_paper_processed(paper_id, source, metrics["chunks_stored"], request_id=request_id)
         logger.info("[DIAG][%s] ChromaDB chunks stored count=%d", request_id, metrics["chunks_stored"])
@@ -334,6 +377,11 @@ def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embe
             batch_vectors = None
             retrieval = None
             try:
-                log_process_rss("after_paper_intermediates_released", request_id)
-            finally:
                 _PAPER_PROCESSING_LIMIT.release()
+            finally:
+                log_process_rss(
+                    "paper_cleanup",
+                    request_id,
+                    paper_id=safe_paper_id,
+                    elapsed_seconds=f"{time.perf_counter() - paper_started:.3f}",
+                )

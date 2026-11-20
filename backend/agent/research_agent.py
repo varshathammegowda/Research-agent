@@ -73,7 +73,7 @@ def _safe_error_message(error: Exception) -> str:
 def run(client, query: str) -> dict:
     request_started = time.perf_counter()
     request_id = uuid.uuid4().hex[:8]
-    log_process_rss("request_started", request_id)
+    log_process_rss("request_start", request_id, elapsed_seconds="0.000")
     diagnostics = {
         "papers_returned": 0,
         "pdfs_downloaded": 0,
@@ -278,6 +278,11 @@ def run(client, query: str) -> dict:
             _safe_error_message(exc),
         )
         answer = "The research evidence was collected, but answer synthesis is temporarily unavailable. Please try again."
+    log_process_rss(
+        "after_final_synthesis",
+        request_id,
+        elapsed_seconds=f"{time.perf_counter() - request_started:.3f}",
+    )
     _status(state, "Research complete")
     logger.info(
         "[DIAG][%s] Request totals papers=%d pdfs_downloaded=%d pdfs_parsed=%d "
@@ -299,7 +304,11 @@ def run(client, query: str) -> dict:
         request_id,
         time.perf_counter() - request_started,
     )
-    log_process_rss("request_completed", request_id)
+    log_process_rss(
+        "request_complete",
+        request_id,
+        elapsed_seconds=f"{time.perf_counter() - request_started:.3f}",
+    )
     logger.info("[AGENT][%s] Research completed", request_id)
     return {"success": True, "query": query, "answer": answer,
             "papers": state.papers, "sources": source_rows,
