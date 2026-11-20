@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from services.paper_search import search_papers
-from services.agent_service import run_research_agent
+from services.research_pipeline import run_research
 
 log_process_rss("after_app_imports")
 
@@ -60,8 +60,8 @@ def research(query: str):
 
 
 @app.get("/research-agent")
-def research_agent(query: str):
-    result = run_research_agent(query)
+def research_endpoint(query: str):
+    result = run_research(query)
 
     return result
 
@@ -71,4 +71,4 @@ def research_post(payload: dict):
     query = payload.get("query", "")
     if not isinstance(query, str) or not query.strip():
         return {"success": False, "error": "A research query is required."}
-    return run_research_agent(query.strip())
+    return run_research(query.strip())

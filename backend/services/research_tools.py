@@ -1,4 +1,4 @@
-"""Thin tool adapters around the existing OpenAlex and Chroma RAG services."""
+"""Paper search, PDF processing, and retrieval helpers for the fixed RAG pipeline."""
 import os
 import tempfile
 import logging
@@ -49,9 +49,18 @@ def search_papers(query: str, limit: int = 5, request_id: str = "unknown") -> di
     return result
 
 
-def retrieve_relevant_content(query: str, top_k: int = 5, request_id: str = "unknown") -> dict:
-    embedding = create_embeddings([query], request_id=request_id)[0]
-    logger.info("[DIAG][%s] Query embeddings generated=1", request_id)
+def retrieve_relevant_content(
+    query: str,
+    top_k: int = 5,
+    request_id: str = "unknown",
+    query_embedding=None,
+) -> dict:
+    embedding = query_embedding
+    embeddings_generated = 0
+    if embedding is None:
+        embedding = create_embeddings([query], request_id=request_id)[0]
+        embeddings_generated = 1
+    logger.info("[DIAG][%s] Query embeddings generated=%d", request_id, embeddings_generated)
     try:
         result = search_chunks(embedding, top_k=top_k, request_id=request_id)
     except Exception as exc:
@@ -62,13 +71,17 @@ def retrieve_relevant_content(query: str, top_k: int = 5, request_id: str = "unk
         )
         return {
             "chunks": [],
-            "query_embeddings_generated": 1,
+            "query_embeddings_generated": embeddings_generated,
             "query_embedding": embedding,
             "error": f"ChromaDB retrieval failed ({type(exc).__name__}).",
         }
     chunks = _format_chunks(result)
     logger.info("[DIAG][%s] ChromaDB chunks_retrieved=%d", request_id, len(chunks))
-    return {"chunks": chunks, "query_embeddings_generated": 1, "query_embedding": embedding}
+    return {
+        "chunks": chunks,
+        "query_embeddings_generated": embeddings_generated,
+        "query_embedding": embedding,
+    }
 
 
 def _format_chunks(result: dict) -> list[str]:
@@ -108,7 +121,7 @@ def retrieve_pdf(paper: dict, request_id: str = "unknown", query_embedding=None)
 
 
 def retrieve_papers(papers: list[dict], request_id: str = "unknown", query_embedding=None) -> list[dict]:
-    """Process only agent-selected papers, concurrently, preserving input order."""
+    """Process only the deterministic paper selection, preserving input order."""
     logger.info(
         "[DIAG][%s] selected_papers=%d configured_paper_processing_concurrency=%d",
         request_id,
