@@ -8,6 +8,7 @@ venv/
 
 # Environment variables / API keys
 .env
+.env.*
 *.env
 
 # ChromaDB
@@ -29,3 +30,5 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+# Keep the safe environment template tracked
+!.env.example

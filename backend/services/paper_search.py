@@ -3,6 +3,7 @@ import time
 
 import requests
 from dotenv import load_dotenv
+from services.timing import measure_stage
 
 
 load_dotenv()
@@ -49,7 +50,8 @@ def reconstruct_abstract(inverted_index):
 def search_openalex(
     query: str,
     limit: int = 5,
-    max_retries: int = 3
+    max_retries: int = 3,
+    request_id: str = "unknown",
 ):
     """
     Search academic papers using OpenAlex.
@@ -78,11 +80,12 @@ def search_openalex(
                 f"(attempt {attempt + 1})..."
             )
 
-            response = requests.get(
-                OPENALEX_URL,
-                params=params,
-                timeout=20
-            )
+            with measure_stage("OpenAlex HTTP search", request_id):
+                response = requests.get(
+                    OPENALEX_URL,
+                    params=params,
+                    timeout=20
+                )
 
             print(
                 "OpenAlex Status:",
@@ -95,99 +98,89 @@ def search_openalex(
 
             if response.status_code == 200:
 
-                data = response.json()
+                with measure_stage("OpenAlex metadata parsing", request_id):
+                    data = response.json()
 
-                papers = []
+                    papers = []
 
-                for work in data.get(
-                    "results",
-                    []
-                ):
-
-                    title = work.get(
-                        "title"
-                    )
-
-                    if not title:
-                        continue
-
-                    title_lower = title.lower()
-
-                    # Ignore erratum/correction papers
-                    if "erratum" in title_lower:
-                        continue
-
-                    if "correction" in title_lower:
-                        continue
-
-                    # --------------------------
-                    # AUTHORS
-                    # --------------------------
-
-                    authors = []
-
-                    for author in work.get(
-                        "authorships",
+                    for work in data.get(
+                        "results",
                         []
                     ):
 
-                        author_info = author.get(
-                            "author"
+                        title = work.get(
+                            "title"
                         )
 
-                        if author_info:
+                        if not title:
+                            continue
 
-                            author_name = (
-                                author_info.get(
-                                    "display_name"
-                                )
+                        title_lower = title.lower()
+
+                        # Ignore erratum/correction papers
+                        if "erratum" in title_lower:
+                            continue
+
+                        if "correction" in title_lower:
+                            continue
+
+                        # --------------------------
+                        # AUTHORS
+                        # --------------------------
+
+                        authors = []
+
+                        for author in work.get(
+                            "authorships",
+                            []
+                        ):
+
+                            author_info = author.get(
+                                "author"
                             )
 
-                            if author_name:
-                                authors.append(
-                                    author_name
+                            if author_info:
+
+                                author_name = (
+                                    author_info.get(
+                                        "display_name"
+                                    )
                                 )
 
-                    # --------------------------
-                    # ABSTRACT
-                    # --------------------------
+                                if author_name:
+                                    authors.append(
+                                        author_name
+                                    )
 
-                    abstract = reconstruct_abstract(
-                        work.get(
-                            "abstract_inverted_index"
+                        # --------------------------
+                        # ABSTRACT
+                        # --------------------------
+
+                        abstract = reconstruct_abstract(
+                            work.get(
+                                "abstract_inverted_index"
+                            )
                         )
-                    )
 
-                    # --------------------------
-                    # URL
-                    # --------------------------
+                        # --------------------------
+                        # URL
+                        # --------------------------
 
-                    url = (
-                        work.get("doi")
-                        or work.get("id")
-                    )
+                        url = (
+                            work.get("doi")
+                            or work.get("id")
+                        )
 
-                    papers.append({
-
-                        "openalex_id": work.get("id"),
-
-                        "title": title,
-
-                        "authors": authors,
-
-                        "year": work.get(
-                            "publication_year"
-                        ),
-
-                        "abstract": abstract,
-
-                        "url": url,
-
-                        "pdf_url": ((work.get("best_oa_location") or {}).get("pdf_url")),
-
-                        "source": "OpenAlex"
-
-                    })
+                        papers.append({
+                            "openalex_id": work.get("id"),
+                            "title": title,
+                            "authors": authors,
+                            "year": work.get("publication_year"),
+                            "abstract": abstract,
+                            "url": url,
+                            "pdf_url": (work.get("best_oa_location") or {}).get("pdf_url"),
+                            "source": "OpenAlex",
+                        })
 
                 print(
                     f"OpenAlex returned "
@@ -237,9 +230,8 @@ def search_openalex(
                     f"Waiting {wait_time} seconds..."
                 )
 
-                time.sleep(
-                    wait_time
-                )
+                with measure_stage("OpenAlex retry backoff", request_id):
+                    time.sleep(wait_time)
 
             # ==================================
             # OTHER ERROR
@@ -269,9 +261,8 @@ def search_openalex(
                     f"{wait_time} seconds..."
                 )
 
-                time.sleep(
-                    wait_time
-                )
+                with measure_stage("OpenAlex retry backoff", request_id):
+                    time.sleep(wait_time)
 
         except requests.exceptions.RequestException as e:
 
@@ -296,7 +287,8 @@ def search_openalex(
 
 def search_papers(
     query: str,
-    limit: int = 5
+    limit: int = 5,
+    request_id: str = "unknown",
 ):
     """
     Main academic paper search function.
@@ -308,7 +300,8 @@ def search_papers(
 
     result = search_openalex(
         query=query,
-        limit=limit
+        limit=limit,
+        request_id=request_id,
     )
 
     if result.get("success"):

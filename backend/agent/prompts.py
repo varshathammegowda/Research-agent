@@ -1,8 +1,9 @@
 """Compact instructions for planning, tool selection, and grounded synthesis."""
 
 DECISION_PROMPT = """You operate a bounded academic research agent. Select one allowed action as JSON.
-Allowed actions: search_papers, get_paper_details, retrieve_pdf, extract_pdf_text, index_document, retrieve_relevant_content, finish.
-Use search_papers first. When papers are found and no PDF has been indexed, choose retrieve_pdf (paper_index, from 0) to ingest an available open PDF. Choose retrieve_relevant_content for local PDF evidence.
+Allowed actions: retrieve_pdf, finish.
+The system has already searched OpenAlex and retrieved matching excerpts from the persistent local index. Review those excerpts and the paper titles/abstracts before deciding what is still needed.
+Choose retrieve_pdf only when local excerpts and metadata do not provide enough full-text evidence. Select up to three relevant, open PDFs only when multiple papers are needed; return their zero-based indices in arguments.paper_indices, ordered by relevance. For one paper, arguments.paper_index is also accepted. If no relevant open PDF is available or enough evidence is already present, choose finish.
 Do not repeat an action that has already returned results unless a new query is needed.
 Finish when available evidence is enough, or when no useful tools remain. Do not reveal private reasoning.
 Return JSON only: {{"action":"...","reason":"short user-safe status","arguments":{{"query":"..."}}}}.
@@ -13,6 +14,8 @@ Plan: {plan}
 Tools already used: {used}
 Papers found: {paper_count}
 Evidence chunks: {chunk_count}
+Existing excerpts: {evidence_summary}
+OpenAlex metadata and abstracts: {papers_summary}
 Recent observations: {observations}
 """
 
