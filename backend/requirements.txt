@@ -3,6 +3,9 @@ uvicorn
 requests
 python-dotenv
 google-genai
-sentence-transformers
+numpy
+onnxruntime
+tokenizers
+huggingface-hub
 PyMuPDF
 chromadb
