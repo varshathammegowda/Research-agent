@@ -8,7 +8,7 @@ import requests
 from threading import BoundedSemaphore, Lock
 from concurrent.futures import ThreadPoolExecutor
 
-from services.paper_search import search_papers as _search_papers
+from services.paper_search import MAX_OPENALEX_PAPERS, search_papers as _search_papers
 from services.embedding_service import create_embeddings
 from services.vector_store import (
     clear_incomplete_paper,
@@ -28,7 +28,12 @@ PAPER_EMBED_BATCH_SIZE = 32
 _PAPER_PROCESSING_LIMIT = BoundedSemaphore(MAX_CONCURRENT_PAPER_PROCESSING)
 
 
-def search_papers(query: str, limit: int = 5, request_id: str = "unknown") -> dict:
+def search_papers(
+    query: str,
+    limit: int = MAX_OPENALEX_PAPERS,
+    request_id: str = "unknown",
+) -> dict:
+    limit = max(1, min(int(limit), MAX_OPENALEX_PAPERS))
     with measure_stage("OpenAlex search and paper metadata", request_id):
         result = _search_papers(query, limit=limit, request_id=request_id)
     papers = result.get("papers", []) if result.get("success") else []
@@ -54,6 +59,7 @@ def retrieve_relevant_content(
     top_k: int = 5,
     request_id: str = "unknown",
     query_embedding=None,
+    papers=None,
 ) -> dict:
     embedding = query_embedding
     embeddings_generated = 0
@@ -61,8 +67,26 @@ def retrieve_relevant_content(
         embedding = create_embeddings([query], request_id=request_id)[0]
         embeddings_generated = 1
     logger.info("[DIAG][%s] Query embeddings generated=%d", request_id, embeddings_generated)
+    paper_ids = None
+    sources = None
+    if papers is not None:
+        papers = papers[:MAX_OPENALEX_PAPERS]
+        if not papers:
+            return {
+                "chunks": [],
+                "query_embeddings_generated": embeddings_generated,
+                "query_embedding": embedding,
+            }
+        paper_ids = [_paper_identifier(paper) for paper in papers]
+        sources = [paper.get("title") for paper in papers if paper.get("title")]
     try:
-        result = search_chunks(embedding, top_k=top_k, request_id=request_id)
+        result = search_chunks(
+            embedding,
+            top_k=top_k,
+            request_id=request_id,
+            paper_ids=paper_ids,
+            sources=sources,
+        )
     except Exception as exc:
         logger.error(
             "[DIAG][%s] ChromaDB retrieval failed error_type=%s",
@@ -122,6 +146,7 @@ def retrieve_pdf(paper: dict, request_id: str = "unknown", query_embedding=None)
 
 def retrieve_papers(papers: list[dict], request_id: str = "unknown", query_embedding=None) -> list[dict]:
     """Process only the deterministic paper selection, preserving input order."""
+    papers = papers[:MAX_OPENALEX_PAPERS]
     logger.info(
         "[DIAG][%s] selected_papers=%d configured_paper_processing_concurrency=%d",
         request_id,

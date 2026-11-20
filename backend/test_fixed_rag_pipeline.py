@@ -10,7 +10,7 @@ import numpy as np
 os.environ.setdefault("GEMINI_API_KEY", "unit-test-placeholder")
 
 import main
-from services import rag_service, research_pipeline, research_tools
+from services import paper_search, rag_service, research_pipeline, research_tools, vector_store
 
 
 class FixedRAGPipelineTests(unittest.TestCase):
@@ -28,14 +28,17 @@ class FixedRAGPipelineTests(unittest.TestCase):
             for index in range(1, 6)
         ]
         query_vector = np.zeros(384, dtype=np.float32)
-        chunks = [f"Source: Paper {index}\nExcerpt: relevant evidence {index}" for index in range(5)]
+        chunks = [
+            f"Source: Paper {index % 3 + 1}\nExcerpt: relevant evidence {index}"
+            for index in range(5)
+        ]
 
         with (
             patch.object(
                 research_tools,
                 "search_papers",
                 return_value={"success": True, "papers": papers},
-            ),
+            ) as openalex_search,
             patch.object(research_pipeline, "create_embeddings", return_value=[query_vector]),
             patch.object(research_tools, "retrieve_papers", return_value=[{"success": True}] * 3) as pdfs,
             patch.object(
@@ -54,8 +57,14 @@ class FixedRAGPipelineTests(unittest.TestCase):
         self.assertEqual(gemini_call.call_count, 1)
         self.assertEqual(gemini_call.call_args.kwargs["model"], "gemini-3-flash-preview")
         self.assertEqual(pdfs.call_args.args[0], papers[:3])
+        self.assertEqual(openalex_search.call_args.kwargs["limit"], 3)
         self.assertEqual(retrieval.call_args.kwargs["top_k"], 5)
+        self.assertEqual(retrieval.call_args.kwargs["papers"], papers[:3])
         self.assertEqual(len(result["retrieved_chunks"]), 5)
+        self.assertEqual(len(result["papers"]), 3)
+        prompt = gemini_call.call_args.kwargs["contents"]
+        self.assertIn("Paper 3", prompt)
+        self.assertNotIn("Paper 4", prompt)
         self.assertEqual(
             set(result),
             {
@@ -72,6 +81,77 @@ class FixedRAGPipelineTests(unittest.TestCase):
         )
         self.assertTrue(result["success"])
         self.assertEqual(result["answer"], "Grounded research answer [S1].")
+
+    def test_openalex_request_caps_per_page_at_three(self):
+        response = SimpleNamespace(
+            status_code=200,
+            json=lambda: {"results": []},
+        )
+        with patch.object(paper_search.requests, "get", return_value=response) as request:
+            paper_search.search_openalex("research topic", limit=10)
+        self.assertEqual(request.call_args.kwargs["params"]["per-page"], 3)
+
+    def test_pdf_processing_helper_caps_input_to_three_papers(self):
+        papers = [{"title": f"Paper {index}"} for index in range(5)]
+        with patch.object(
+            research_tools,
+            "retrieve_pdf",
+            side_effect=lambda paper, **_: {"success": True, "title": paper["title"]},
+        ) as process_pdf:
+            results = research_tools.retrieve_papers(papers)
+        self.assertEqual(process_pdf.call_count, 3)
+        self.assertEqual([result["title"] for result in results], ["Paper 0", "Paper 1", "Paper 2"])
+
+    def test_chroma_retrieval_is_limited_to_three_selected_papers(self):
+        papers = [
+            {"openalex_id": f"openalex-{index}", "title": f"Paper {index}"}
+            for index in range(1, 5)
+        ]
+        query_vector = np.zeros(384, dtype=np.float32)
+        with patch.object(
+            research_tools,
+            "search_chunks",
+            return_value={"documents": [["relevant"]], "metadatas": [[{"source": "Paper 1"}]]},
+        ) as search:
+            result = research_tools.retrieve_relevant_content(
+                "research topic",
+                top_k=5,
+                query_embedding=query_vector,
+                papers=papers,
+            )
+        self.assertEqual(search.call_args.kwargs["top_k"], 5)
+        self.assertEqual(
+            search.call_args.kwargs["paper_ids"],
+            [research_tools._paper_identifier(paper) for paper in papers[:3]],
+        )
+        self.assertEqual(search.call_args.kwargs["sources"], ["Paper 1", "Paper 2", "Paper 3"])
+        self.assertEqual(result["chunks"], ["Source: Paper 1\nExcerpt: relevant"])
+
+    def test_chroma_query_filters_to_ids_and_legacy_titles_without_changing_top_k(self):
+        paper_ids = ["openalex-1", "openalex-2", "openalex-3"]
+        titles = ["Paper 1", "Paper 2", "Paper 3"]
+        query_vector = np.zeros(384, dtype=np.float32)
+        with patch.object(
+            vector_store.collection,
+            "query",
+            return_value={"documents": [["chunk"]]},
+        ) as query:
+            vector_store.search_chunks(
+                query_vector,
+                top_k=5,
+                paper_ids=paper_ids,
+                sources=titles,
+            )
+        self.assertEqual(query.call_args.kwargs["n_results"], 5)
+        self.assertEqual(
+            query.call_args.kwargs["where"],
+            {
+                "$or": [
+                    {"paper_id": {"$in": paper_ids}},
+                    {"source": {"$in": titles}},
+                ]
+            },
+        )
 
     def test_post_endpoint_keeps_existing_response_shape(self):
         expected = {

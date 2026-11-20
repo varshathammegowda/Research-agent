@@ -8,7 +8,7 @@ log_process_rss("startup_begin")
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from services.paper_search import search_papers
+from services.paper_search import MAX_OPENALEX_PAPERS, search_papers
 from services.research_pipeline import run_research
 
 log_process_rss("after_app_imports")
@@ -51,7 +51,7 @@ def home():
 
 @app.get("/research")
 def research(query: str):
-    result = search_papers(query)
+    result = search_papers(query, limit=MAX_OPENALEX_PAPERS)
 
     return {
         "query": query,

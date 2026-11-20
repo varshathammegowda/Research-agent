@@ -109,13 +109,28 @@ def clear_incomplete_paper(paper_id, request_id="unknown"):
             collection.delete(ids=ids)
 
 
-def search_chunks(query_embedding, top_k=5, request_id="unknown", paper_id=None, source=None):
+def search_chunks(
+    query_embedding,
+    top_k=5,
+    request_id="unknown",
+    paper_id=None,
+    source=None,
+    paper_ids=None,
+    sources=None,
+):
     with measure_stage("ChromaDB similarity search", request_id):
         query = {
             "query_embeddings": [query_embedding.tolist()],
             "n_results": top_k,
         }
-        if paper_id:
+        if paper_ids or sources:
+            filters = []
+            if paper_ids:
+                filters.append({"paper_id": {"$in": list(paper_ids)}})
+            if sources:
+                filters.append({"source": {"$in": list(sources)}})
+            query["where"] = filters[0] if len(filters) == 1 else {"$or": filters}
+        elif paper_id:
             query["where"] = {"paper_id": paper_id}
         elif source:
             query["where"] = {"source": source}

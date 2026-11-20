@@ -7,10 +7,11 @@ import uuid
 from services.embedding_service import create_embeddings
 from services import rag_service
 from services import research_tools
+from services.paper_search import MAX_OPENALEX_PAPERS
 from services.timing import log_process_rss, measure_stage
 
 logger = logging.getLogger(__name__)
-MAX_PAPERS_TO_PROCESS = 3
+MAX_PAPERS_TO_PROCESS = MAX_OPENALEX_PAPERS
 TOP_RETRIEVED_CHUNKS = 5
 
 
@@ -34,7 +35,11 @@ def run_research(query: str) -> dict:
     mark("Searching OpenAlex", "search_papers")
     try:
         with measure_stage("OpenAlex search and paper metadata", request_id):
-            search_result = research_tools.search_papers(query, limit=5, request_id=request_id)
+            search_result = research_tools.search_papers(
+                query,
+                limit=MAX_OPENALEX_PAPERS,
+                request_id=request_id,
+            )
     except Exception as exc:
         logger.error(
             "[RAG][%s] OpenAlex search failed error_type=%s",
@@ -42,7 +47,9 @@ def run_research(query: str) -> dict:
             type(exc).__name__,
         )
         search_result = {"success": False, "papers": []}
-    papers = search_result.get("papers", []) if search_result.get("success") else []
+    papers = (search_result.get("papers", []) if search_result.get("success") else [])[
+        :MAX_OPENALEX_PAPERS
+    ]
 
     query_embedding = None
     try:
@@ -82,6 +89,7 @@ def run_research(query: str) -> dict:
                 top_k=TOP_RETRIEVED_CHUNKS,
                 request_id=request_id,
                 query_embedding=query_embedding,
+                papers=papers,
             )
         except Exception as exc:
             logger.error(

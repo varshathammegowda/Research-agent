@@ -10,6 +10,7 @@ load_dotenv()
 
 
 OPENALEX_URL = "https://api.openalex.org/works"
+MAX_OPENALEX_PAPERS = 3
 
 OPENALEX_API_KEY = os.getenv(
     "OPENALEX_API_KEY"
@@ -49,7 +50,7 @@ def reconstruct_abstract(inverted_index):
 
 def search_openalex(
     query: str,
-    limit: int = 5,
+    limit: int = MAX_OPENALEX_PAPERS,
     max_retries: int = 3,
     request_id: str = "unknown",
 ):
@@ -62,6 +63,7 @@ def search_openalex(
     # a wildcard character.
     clean_query = query.strip().rstrip("?")
 
+    limit = max(1, min(int(limit), MAX_OPENALEX_PAPERS))
     params = {
         "search": clean_query,
         "per-page": limit
@@ -287,7 +289,7 @@ def search_openalex(
 
 def search_papers(
     query: str,
-    limit: int = 5,
+    limit: int = MAX_OPENALEX_PAPERS,
     request_id: str = "unknown",
 ):
     """
@@ -298,6 +300,7 @@ def search_papers(
         "\nSearching OpenAlex..."
     )
 
+    limit = max(1, min(int(limit), MAX_OPENALEX_PAPERS))
     result = search_openalex(
         query=query,
         limit=limit,

@@ -8,6 +8,7 @@ from google import genai
 
 from services.embedding_service import create_embeddings
 from services.gemini_generation import generate_content
+from services.paper_search import MAX_OPENALEX_PAPERS
 from services.timing import log_process_rss, measure_stage
 from services.vector_store import search_chunks
 
@@ -29,7 +30,7 @@ def generate_answer(
     papers=None,
 ):
     """Retrieve up to top_k chunks when needed, then make one synthesis call."""
-    papers = papers or []
+    papers = (papers or [])[:MAX_OPENALEX_PAPERS]
     if retrieval_result is None:
         if query_embedding is None:
             query_embedding = create_embeddings([query], request_id=request_id)[0]
