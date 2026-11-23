@@ -39,7 +39,7 @@ function App() {
     setPapers([]);
 
     try {
-      const url = `https://research-agent-2-nkxh.onrender.com/research-agent?query=${encodeURIComponent(query)}`;
+      const url = `/api/research-agent?query=${encodeURIComponent(query)}`;
       const response = await fetch(url);
       const responseText = await response.text();
 

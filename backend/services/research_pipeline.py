@@ -1,6 +1,8 @@
 """Deterministic OpenAlex, PDF, and retrieval-augmented research pipeline."""
 
 import logging
+import os
+import re
 import time
 import uuid
 
@@ -11,6 +13,28 @@ from services.paper_search import MAX_OPENALEX_PAPERS
 from services.timing import log_process_rss, measure_stage
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_error_text(value) -> str:
+    """Render an exception field while redacting credentials before logging."""
+    text = str(value)
+    secret_markers = ("API_KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")
+    secrets = sorted(
+        (value for name, value in os.environ.items()
+         if value and any(marker in name.upper() for marker in secret_markers)),
+        key=len,
+        reverse=True,
+    )
+    for secret in secrets:
+        text = text.replace(secret, "[REDACTED]")
+    text = re.sub(r"\bAIza[0-9A-Za-z_-]{20,}\b", "[REDACTED]", text)
+    text = re.sub(
+        r"(?i)(\b(?:key|api[_-]?key|access[_-]?token|client[_-]?secret|password)\b\s*[=:]\s*)[^\s,}\"']+",
+        r"\1[REDACTED]",
+        text,
+    )
+    text = re.sub(r"(?i)(\bBearer\s+)[A-Za-z0-9._~+/-]+=*", r"\1[REDACTED]", text)
+    return text
 MAX_PAPERS_TO_PROCESS = MAX_OPENALEX_PAPERS
 TOP_RETRIEVED_CHUNKS = 5
 
@@ -117,10 +141,15 @@ def run_research(query: str) -> dict:
         retrieved_chunks = rag_result.get("retrieved_chunks", retrieval_result.get("chunks", []))
         sources = rag_result.get("paper_sources", [])
     except Exception as exc:
+        api_details = getattr(exc, "details", None)
         logger.error(
-            "[RAG][%s] Final Gemini synthesis failed error_type=%s",
+            "[RAG][%s] Final Gemini synthesis failed error_type=%s error_message=%s http_status=%s http_code=%s api_details=%s",
             request_id,
             type(exc).__name__,
+            _safe_error_text(getattr(exc, "message", None) or exc),
+            _safe_error_text(getattr(exc, "status", None)),
+            _safe_error_text(getattr(exc, "code", None)),
+            _safe_error_text(api_details) if api_details is not None else "unavailable",
         )
         answer = "The research evidence was collected, but answer synthesis is temporarily unavailable. Please try again."
         retrieved_chunks = retrieval_result.get("chunks", [])

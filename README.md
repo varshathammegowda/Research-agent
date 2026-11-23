@@ -4,13 +4,6 @@ An AI-powered research assistant that automates the process of finding, retrievi
 
 The project uses an **AI Agent architecture** to intelligently decide how to perform research tasks instead of following only a fixed RAG pipeline.
 
-## 🌐 Live Demo
-
-**Live Application:**  
-https://research-agent-seven-red.vercel.app/
-
----
-
 ## 📌 Overview
 
 The **AI Research Agent** is designed to help users perform academic and technical research efficiently.
@@ -290,11 +283,6 @@ Therefore, **RAG is a component used by the AI agent rather than the entire arch
 ### PDF Processing
 
 - PyMuPDF
-
-### Deployment
-
-- Vercel – Frontend
-- Render – Backend
 
 ---
 
@@ -627,9 +615,6 @@ Dayananda Sagar College of Engineering, Bangalore
 ---
 
 ## 🌐 Project Links
-
-**Live Application:**  
-https://research-agent-seven-red.vercel.app/
 
 **GitHub Repository:**  
 https://github.com/varshathammegowda/Research-agent
