@@ -230,57 +230,190 @@ Question Embedding
 ChromaDB
       ↓
 Relevant Research Chunks
-      ↓
-Gemini
-      ↓
-Research Answer
+```
 
-This allows Gemini to generate the answer using retrieved research evidence.
+This is the RAG component inside the larger agent architecture.
 
-🤖 Research Agent Workflow
+---
 
-The research agent combines multiple components:
+## 🔄 Agent + RAG Architecture
 
-User Question
-      │
-      ▼
-Academic Search
-      │
-      ▼
-OpenAlex
-      │
-      ▼
-Paper Metadata
-      │
-      ├───────────────┐
-      │               │
-      ▼               ▼
-Query Embedding    Research PDF
-      │               │
-      ▼               ▼
-   ChromaDB       Text Chunks
-      │
-      ▼
-Relevant Research Evidence
-      │
-      ▼
-Gemini
-      │
-      ▼
-AI Research Answer
-      │
-      ▼
-React UI
-⚙️ Installation
-Prerequisites
+The important distinction is:
 
-Install:
+### Traditional RAG
 
-Python 3
-Node.js
-Git
-VS Code
-🐍 Backend Setup
+```text
+Query
+  ↓
+Retrieve
+  ↓
+Generate
+  ↓
+Answer
+```
+
+### This Project
+
+```text
+Query
+  ↓
+AI Agent
+  ↓
+Understand Task
+  ↓
+Decide Required Actions
+  ↓
+Search / Retrieve / Analyze
+  ↓
+RAG Retrieval
+  ↓
+LLM Reasoning
+  ↓
+Generate Structured Answer
+```
+
+Therefore, **RAG is a component used by the AI agent rather than the entire architecture itself.**
+
+---
+
+## 🧩 Technology Stack
+
+### Frontend
+
+- React.js
+- JavaScript
+- HTML
+- CSS
+- Vite
+
+### Backend
+
+- Python
+- FastAPI
+- Uvicorn
+
+### AI / LLM
+
+- Google Gemini API
+- Generative AI
+- Agent-based workflow
+
+### RAG / NLP
+
+- Sentence Transformers
+- `all-MiniLM-L6-v2`
+- ChromaDB
+- Semantic Search
+- Text Chunking
+
+### Research Data
+
+- OpenAlex API
+- Academic Research Papers
+- PDF Documents
+
+### PDF Processing
+
+- PyMuPDF
+
+---
+
+## 📂 Project Architecture
+
+```text
+Research-Agent/
+│
+├── frontend/
+│   ├── src/
+│   ├── components/
+│   ├── pages/
+│   └── ...
+│
+├── backend/
+│   ├── main.py
+│   ├── agent/
+│   ├── rag/
+│   ├── services/
+│   ├── utils/
+│   └── ...
+│
+├── requirements.txt
+├── package.json
+├── .env
+└── README.md
+```
+
+> The exact folder structure may vary depending on the current implementation.
+
+---
+
+## ⚙️ Core Components
+
+### AI Research Agent
+
+Responsible for:
+
+- Understanding research queries
+- Planning research actions
+- Selecting appropriate tools
+- Coordinating retrieval and analysis
+- Generating the final response
+
+### OpenAlex
+
+Used for discovering relevant academic literature.
+
+### PyMuPDF
+
+Used to extract text from research-paper PDFs.
+
+### Sentence Transformers
+
+Used to generate semantic vector embeddings.
+
+### ChromaDB
+
+Used for vector storage and similarity search.
+
+### Gemini
+
+Used for understanding retrieved context and generating the final research response.
+
+### FastAPI
+
+Provides the backend API layer connecting the frontend with the AI research pipeline.
+
+### React
+
+Provides the interactive research interface.
+
+---
+
+## 🚀 Features
+
+- 🔎 Academic paper search
+- 🤖 AI-agent-based research workflow
+- 📄 PDF document processing
+- 🧠 Semantic search
+- 📚 RAG-based contextual retrieval
+- ✨ LLM-powered answer generation
+- 📊 Structured research results
+- 🌐 Web-based interface
+- ⚡ FastAPI backend
+- 🔐 API-based architecture
+
+---
+
+## 🛠️ Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone <your-github-repository-url>
+cd Research-agent
+```
+
+### 2. Backend Setup
 
 Navigate to the backend:
 
