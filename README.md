@@ -286,7 +286,7 @@ Therefore, **RAG is a component used by the AI agent rather than the entire arch
 
 ---
 
-## ## RAG Configuration
+##  RAG Configuration
 
 The Research Agent uses the following configuration for document chunking, embedding, and retrieval:
 
