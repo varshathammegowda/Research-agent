@@ -342,7 +342,6 @@ def _retrieve_pdf_locked(paper: dict, paper_id: str, request_id: str, query_embe
             batch_vectors = create_embeddings(
                 batch_chunks,
                 request_id=request_id,
-                diagnostic_fields={"paper_id": safe_paper_id, "batch": batch_index},
             )
             metrics["embeddings_generated"] += len(batch_vectors)
             store_chunks(

@@ -4,8 +4,6 @@ requests
 python-dotenv
 google-genai
 numpy
-onnxruntime
-tokenizers
-huggingface-hub
+sentence-transformers
 PyMuPDF
 chromadb

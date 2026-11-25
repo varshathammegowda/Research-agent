@@ -13,8 +13,6 @@ from services.paper_search import MAX_OPENALEX_PAPERS
 from services.timing import log_process_rss, measure_stage
 
 logger = logging.getLogger(__name__)
-
-
 def _safe_error_text(value) -> str:
     """Render an exception field while redacting credentials before logging."""
     text = str(value)
@@ -35,6 +33,7 @@ def _safe_error_text(value) -> str:
     )
     text = re.sub(r"(?i)(\bBearer\s+)[A-Za-z0-9._~+/-]+=*", r"\1[REDACTED]", text)
     return text
+
 MAX_PAPERS_TO_PROCESS = MAX_OPENALEX_PAPERS
 TOP_RETRIEVED_CHUNKS = 5
 
@@ -51,7 +50,7 @@ def run_research(query: str) -> dict:
 
     plan = [
         "Search OpenAlex and retrieve paper metadata and abstracts",
-        "Process up to three available open PDFs using the paper cache",
+        "Process up to five available open PDFs using the paper cache",
         "Retrieve the five most relevant indexed research chunks",
         "Generate one answer grounded in the retrieved evidence",
     ]
@@ -85,7 +84,7 @@ def run_research(query: str) -> dict:
             type(exc).__name__,
         )
 
-    # OpenAlex already ranks papers for this query. Select the first three with
+    # OpenAlex already ranks papers for this query. Select the first five with
     # accessible PDFs in that order; no model makes this selection.
     selected_papers = [paper for paper in papers if paper.get("pdf_url")][:MAX_PAPERS_TO_PROCESS]
     paper_results = []

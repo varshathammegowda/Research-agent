@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from google import genai
+from services.gemini_generation import generate_content
 import os
 
 load_dotenv()
@@ -11,8 +12,8 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-response = client.models.generate_content(
-    model="gemini-3.8-flash",
+response = generate_content(
+    client, model="gemini-3-flash-preview",
     contents="Reply only with OK",
 )
 

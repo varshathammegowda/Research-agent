@@ -1,626 +1,421 @@
-# 🔬 AI Research Agent
+# 🔬 AI Academic Research Agent
 
-An AI-powered research assistant that automates the process of finding, retrieving, understanding, and summarizing research papers.
-
-The project uses an **AI Agent architecture** to intelligently decide how to perform research tasks instead of following only a fixed RAG pipeline.
-
-## 📌 Overview
-
-The **AI Research Agent** is designed to help users perform academic and technical research efficiently.
-
-A user can enter a research topic or question, and the agent:
-
-1. Understands the user's research query.
-2. Determines what information is required.
-3. Searches for relevant academic papers.
-4. Retrieves available paper content.
-5. Extracts and processes relevant information.
-6. Uses semantic retrieval to identify useful context.
-7. Generates a structured research response using an LLM.
-
-The final output remains focused on providing useful research information such as:
-
-- Research overview
-- Key findings
-- Relevant papers
-- Research gaps
-- Important insights
+An AI-powered academic research assistant that searches academic papers, retrieves relevant research evidence from PDFs, and uses Retrieval-Augmented Generation (RAG) with Gemini to generate research-based answers.
 
 ---
 
-## 🤖 AI Agent Architecture
+## 🚀 Project Overview
 
-Unlike a traditional fixed RAG pipeline, this project uses an **agent-based architecture**.
+The AI Academic Research Agent combines academic search, document processing, semantic search, vector databases, and Generative AI into a single research workflow.
 
-### High-Level Architecture
+A user enters a research question such as:
+
+> What machine learning techniques are used for IoT security?
+
+The system then:
+
+1. Searches academic papers using OpenAlex.
+2. Extracts text from research PDFs.
+3. Splits documents into smaller chunks.
+4. Converts chunks into embeddings.
+5. Stores embeddings in ChromaDB.
+6. Performs semantic similarity search.
+7. Retrieves relevant research evidence.
+8. Sends the retrieved evidence to Gemini.
+9. Generates a structured research answer.
+10. Displays the answer and related academic papers in the React frontend.
+
+---
+
+## 🏗️ System Architecture
 
 ```text
-                    ┌─────────────────────┐
-                    │      User Query     │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │    AI Research      │
-                    │       Agent         │
-                    └──────────┬──────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │   Query Analysis    │
-                    │  & Task Planning    │
-                    └──────────┬──────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-              ▼                ▼                ▼
-       ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-       │   Search    │  │   Retrieve  │  │   Analyze   │
-       │   Papers    │  │   Documents  │  │   Context   │
-       └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
-              │                │                │
-              └────────────────┼────────────────┘
-                               ▼
-                    ┌─────────────────────┐
-                    │ Semantic Retrieval  │
-                    │   / RAG Pipeline    │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │      LLM / Gemini   │
-                    │ Response Generation │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Structured Research │
-                    │      Response       │
-                    └─────────────────────┘
-```
+                    User
+                     │
+                     ▼
+              React Frontend
+                     │
+                     ▼
+                Vite Proxy
+                     │
+                     ▼
+              FastAPI Backend
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+          ▼                     ▼
+      OpenAlex              ChromaDB
+   Academic Search       Semantic Search
+          │                     │
+          │              Research Evidence
+          │                     │
+          └──────────┬──────────┘
+                     ▼
+                Gemini LLM
+                     │
+                     ▼
+             Research Answer
+                     │
+                     ▼
+              React Frontend
 
----
 
-## 🧠 How the AI Research Agent Works
+✨ Features
+🔎 Academic paper search
+📄 PDF text extraction
+✂️ Text chunking with overlap
+🧠 Sentence Transformer embeddings
+🗄️ ChromaDB vector database
+🔍 Semantic similarity search
+📚 Retrieval-Augmented Generation (RAG)
+🤖 Gemini-powered research synthesis
+🌐 React frontend
+⚡ FastAPI backend
+🔗 Academic paper links
+🔐 Environment-based API key management
+🛠️ Tech Stack
+Frontend
+React
+Vite
+JavaScript
+HTML
+CSS
+Backend
+Python
+FastAPI
+Uvicorn
+AI / ML
+Sentence Transformers
+Gemini
+Retrieval-Augmented Generation (RAG)
+Database
+ChromaDB
+Academic Search
+OpenAlex
+Document Processing
+PyMuPDF
+Development
+Git
+GitHub
+VS Code
+📂 Project Structure
+academic-research-agent/
+│
+├── backend/
+│   │
+│   ├── data/
+│   │   ├── papers/
+│   │   │   └── sample.pdf
+│   │   └── chroma/
+│   │
+│   ├── services/
+│   │   ├── agent_service.py
+│   │   ├── embedding_service.py
+│   │   ├── paper_search.py
+│   │   ├── pdf_parser.py
+│   │   ├── text_chunker.py
+│   │   └── vector_store.py
+│   │
+│   ├── main.py
+│   ├── .env
+│   └── requirements.txt
+│
+├── frontend/
+│   │
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   │
+│   ├── vite.config.js
+│   ├── package.json
+│   └── package-lock.json
+│
+├── .gitignore
+└── README.md
+🧠 How the System Works
+1. Academic Paper Search
 
-### 1. User Query
-
-The user enters a research question or topic through the React frontend.
+The system uses OpenAlex to search for relevant academic papers.
 
 Example:
 
-```text
-"What are the recent approaches for intrusion detection
-in Internet of Vehicles?"
-```
+User:
+What machine learning techniques are used for IoT security?
 
-The query is sent to the backend.
+                    ↓
 
----
+OpenAlex
 
-### 2. Agentic Query Analysis
+                    ↓
 
-The AI agent first analyzes the query and determines what actions are required.
+5 relevant academic papers
 
-Instead of blindly executing a fixed sequence, the agent can decide which available research tools or retrieval steps are relevant.
+The returned information includes:
 
-For example:
+Paper title
+Authors
+Publication year
+Abstract
+Paper URL
+2. PDF Processing
 
-```text
-User Query
-    ↓
-Understand Intent
-    ↓
-Determine Research Requirements
-    ↓
-Search / Retrieve Relevant Sources
-    ↓
-Analyze Retrieved Information
-    ↓
-Generate Answer
-```
+Research PDFs are processed using PyMuPDF.
 
-This makes the system more flexible than a conventional RAG-only architecture.
-
----
-
-### 3. Academic Paper Search
-
-The agent can use academic sources such as **OpenAlex** to identify relevant research papers.
-
-The search process retrieves information such as:
-
-- Paper title
-- Authors
-- Publication information
-- Abstract
-- DOI
-- Available PDF
-- Other metadata
-
----
-
-### 4. Document Retrieval
-
-When a paper has an accessible PDF, the backend retrieves the document.
-
-The PDF is processed using **PyMuPDF**.
-
-```text
-Research Paper PDF
-        ↓
-     PyMuPDF
-        ↓
-   Extracted Text
-```
-
-This allows the system to work with the actual content of research papers rather than relying only on metadata.
-
----
-
-### 5. Text Processing
-
-The extracted document is divided into smaller chunks.
-
-Chunking allows the system to retrieve only the portions of a paper that are relevant to the user's query.
-
-```text
 PDF
  ↓
 Text Extraction
  ↓
-Text Cleaning
- ↓
-Chunking
- ↓
-Embeddings
-```
+Raw Research Text
 
----
+The extracted text can then be processed by the RAG pipeline.
 
-### 6. Semantic Retrieval
+3. Text Chunking
 
-The text chunks are converted into vector embeddings using:
+Large documents are divided into smaller chunks.
 
-```text
-SentenceTransformer
-"all-MiniLM-L6-v2"
-```
+The project uses:
 
-The embeddings are stored and searched using **ChromaDB**.
+Chunk size = 1000 characters
+Overlap = 200 characters
 
-When the user asks a question, the system performs semantic similarity search to identify the most relevant chunks.
+The overlap helps preserve context between neighboring chunks.
 
-```text
-User Query
-     ↓
-Query Embedding
-     ↓
-Vector Search
-     ↓
+Document
+│
+├── Chunk 1
+│   └── characters 0–999
+│
+├── Chunk 2
+│   └── characters 800–1799
+│
+├── Chunk 3
+│   └── characters 1600–2599
+│
+└── ...
+4. Embeddings
+
+Each text chunk is converted into a numerical vector using:
+
+all-MiniLM-L6-v2
+
+Each chunk is represented as a:
+
+384-dimensional vector
+
+The vector captures the semantic meaning of the text.
+
+5. ChromaDB
+
+The generated embeddings are stored in ChromaDB.
+
+Research Chunk
+      ↓
+Embedding
+      ↓
+ChromaDB
+
+When a user asks a question, the question is also converted into an embedding.
+
+The system then searches ChromaDB for semantically similar research chunks.
+
+6. Retrieval-Augmented Generation
+
+The project uses RAG instead of sending a question directly to the LLM.
+
+User Question
+      ↓
+Question Embedding
+      ↓
+ChromaDB
+      ↓
 Relevant Research Chunks
-```
+      ↓
+Gemini
+      ↓
+Research Answer
 
-This is the RAG component inside the larger agent architecture.
+This allows Gemini to generate the answer using retrieved research evidence.
 
----
+🤖 Research Agent Workflow
 
-## 🔄 Agent + RAG Architecture
+The research agent combines multiple components:
 
-The important distinction is:
+User Question
+      │
+      ▼
+Academic Search
+      │
+      ▼
+OpenAlex
+      │
+      ▼
+Paper Metadata
+      │
+      ├───────────────┐
+      │               │
+      ▼               ▼
+Query Embedding    Research PDF
+      │               │
+      ▼               ▼
+   ChromaDB       Text Chunks
+      │
+      ▼
+Relevant Research Evidence
+      │
+      ▼
+Gemini
+      │
+      ▼
+AI Research Answer
+      │
+      ▼
+React UI
+⚙️ Installation
+Prerequisites
 
-### Traditional RAG
+Install:
 
-```text
-Query
-  ↓
-Retrieve
-  ↓
-Generate
-  ↓
-Answer
-```
-
-### This Project
-
-```text
-Query
-  ↓
-AI Agent
-  ↓
-Understand Task
-  ↓
-Decide Required Actions
-  ↓
-Search / Retrieve / Analyze
-  ↓
-RAG Retrieval
-  ↓
-LLM Reasoning
-  ↓
-Generate Structured Answer
-```
-
-Therefore, **RAG is a component used by the AI agent rather than the entire architecture itself.**
-
----
-
-## 🧩 Technology Stack
-
-### Frontend
-
-- React.js
-- JavaScript
-- HTML
-- CSS
-- Vite
-
-### Backend
-
-- Python
-- FastAPI
-- Uvicorn
-
-### AI / LLM
-
-- Google Gemini API
-- Generative AI
-- Agent-based workflow
-
-### RAG / NLP
-
-- Sentence Transformers
-- `all-MiniLM-L6-v2`
-- ChromaDB
-- Semantic Search
-- Text Chunking
-
-### Research Data
-
-- OpenAlex API
-- Academic Research Papers
-- PDF Documents
-
-### PDF Processing
-
-- PyMuPDF
-
----
-
-## 📂 Project Architecture
-
-```text
-Research-Agent/
-│
-├── frontend/
-│   ├── src/
-│   ├── components/
-│   ├── pages/
-│   └── ...
-│
-├── backend/
-│   ├── main.py
-│   ├── agent/
-│   ├── rag/
-│   ├── services/
-│   ├── utils/
-│   └── ...
-│
-├── requirements.txt
-├── package.json
-├── .env
-└── README.md
-```
-
-> The exact folder structure may vary depending on the current implementation.
-
----
-
-## ⚙️ Core Components
-
-### AI Research Agent
-
-Responsible for:
-
-- Understanding research queries
-- Planning research actions
-- Selecting appropriate tools
-- Coordinating retrieval and analysis
-- Generating the final response
-
-### OpenAlex
-
-Used for discovering relevant academic literature.
-
-### PyMuPDF
-
-Used to extract text from research-paper PDFs.
-
-### Sentence Transformers
-
-Used to generate semantic vector embeddings.
-
-### ChromaDB
-
-Used for vector storage and similarity search.
-
-### Gemini
-
-Used for understanding retrieved context and generating the final research response.
-
-### FastAPI
-
-Provides the backend API layer connecting the frontend with the AI research pipeline.
-
-### React
-
-Provides the interactive research interface.
-
----
-
-## 🚀 Features
-
-- 🔎 Academic paper search
-- 🤖 AI-agent-based research workflow
-- 📄 PDF document processing
-- 🧠 Semantic search
-- 📚 RAG-based contextual retrieval
-- ✨ LLM-powered answer generation
-- 📊 Structured research results
-- 🌐 Web-based interface
-- ⚡ FastAPI backend
-- 🔐 API-based architecture
-
----
-
-## 🛠️ Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone <your-github-repository-url>
-cd Research-agent
-```
-
-### 2. Backend Setup
+Python 3
+Node.js
+Git
+VS Code
+🐍 Backend Setup
 
 Navigate to the backend:
 
-```bash
 cd backend
-```
 
 Create a virtual environment:
 
-```bash
 python -m venv venv
-```
 
 Activate it on Windows:
 
-```bash
 venv\Scripts\activate
-```
 
 Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+python -m pip install fastapi uvicorn requests python-dotenv pymupdf chromadb sentence-transformers google-genai
+🔑 Environment Variables
 
----
+Create:
 
-### 3. Configure Environment Variables
+backend/.env
 
-Create a `.env` file inside the backend directory.
+Add:
 
-Example:
-
-```env
 GEMINI_API_KEY=your_gemini_api_key
-```
+OPENALEX_API_KEY=your_openalex_api_key
 
-Add any other API keys required by the current implementation.
+Never commit .env to GitHub.
 
-**Do not commit `.env` or API keys to GitHub.**
+▶️ Run the Backend
 
----
+From the backend directory:
 
-### 4. Start the Backend
-
-```bash
 uvicorn main:app --reload
-```
 
-The FastAPI server will start locally.
+The backend will run at:
 
----
+http://127.0.0.1:8000
+⚛️ Frontend Setup
 
-### 5. Start the Frontend
+Open another terminal.
 
-Open another terminal:
+Navigate to:
+
+cd frontend
+
+Install dependencies:
+
+npm install
+
+Start the development server:
+
+npm run dev
+
+The frontend will run at:
+
+http://localhost:5173
+🔬 Example Research Question
+
+Enter:
+
+What machine learning techniques are used for IoT security?
+
+The agent retrieves relevant academic research and generates a structured answer covering topics such as:
+
+Decision Trees
+Random Forest
+SVM
+CNN
+LSTM
+GRU
+Federated Learning
+Anomaly Detection
+Explainable AI
+Edge-oriented ML techniques
+
+The frontend also displays related academic papers with links.
+
+🔐 Security
+
+API keys are stored using environment variables.
+
+The following files and directories should not be committed:
+
+.env
+venv/
+node_modules/
+data/chroma/
+
+These are excluded through .gitignore.
+
+
+
+📌 Future Improvements
+
+📑 Upload PDFs directly from the frontend
+📚 Search and compare multiple research papers
+📝 Automatic literature review generation
+🔗 Better citation management
+📊 Research trend analysis
+🧠 Multi-agent research workflow
+💬 Conversational research assistant
+📈 Paper relevance ranking
+🗂️ Research history
+🔐 User authentication
+
+👩‍💻 Author
+Varsha Thammegowda
+Built as an AI/ML research project to explore:
+
+Generative AI + RAG + Academic Search + Agentic AI
+
+
+## Running with Docker
+
+1. Copy `.env.example` to `.env` in the project root and set `GEMINI_API_KEY`. Set `OPENALEX_API_KEY` if you use one; it is optional. The root `.env` is read by Docker Compose and is not copied into either image.
+2. Build and start the application:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose up --build
 ```
 
-The React development server will start.
+3. Open the frontend at `http://localhost:8080`. The FastAPI backend is available at `http://localhost:8000` (API docs: `http://localhost:8000/docs`). The frontend proxies `/api/` requests to the backend at `http://backend:8000` over the private Compose network.
 
----
+Useful commands:
 
-## 🔗 API Flow
+```bash
+# Run in background
+docker compose up -d
 
-```text
-React Frontend
-      │
-      ▼
-FastAPI Backend
-      │
-      ▼
-AI Research Agent
-      │
-      ├── OpenAlex Search
-      │
-      ├── PDF Retrieval
-      │
-      ├── PyMuPDF
-      │
-      ├── Embedding Model
-      │
-      ├── ChromaDB
-      │
-      └── Gemini
-              │
-              ▼
-       Generated Response
-              │
-              ▼
-       React Frontend
+# Stop
+docker compose down
+
+# View logs
+docker compose logs -f
 ```
 
----
-
-## 🔬 Example Research Workflow
-
-Suppose the user enters:
-
-```text
-"Recent machine learning approaches for IoT intrusion detection"
-```
-
-The system performs approximately:
-
-```text
-1. Receive research query
-          ↓
-2. AI Agent understands the query
-          ↓
-3. Identify research requirements
-          ↓
-4. Search academic literature
-          ↓
-5. Retrieve relevant papers
-          ↓
-6. Download accessible PDFs
-          ↓
-7. Extract PDF text
-          ↓
-8. Split text into chunks
-          ↓
-9. Generate embeddings
-          ↓
-10. Perform semantic retrieval
-          ↓
-11. Send relevant context to Gemini
-          ↓
-12. Generate structured research response
-```
-
----
-
-## 🎯 Research Output
-
-The system is designed to provide a concise research-oriented response containing information such as:
-
-### Research Overview
-
-A brief explanation of the research topic.
-
-### Existing Approaches
-
-Important methods and approaches identified from the retrieved literature.
-
-### Key Findings
-
-Major findings from relevant papers.
-
-### Research Gap
-
-Potential areas that are insufficiently explored or could be investigated further.
-
-### Relevant References
-
-Research papers used to support the generated response.
-
----
-
-## 🧠 Why an AI Agent Instead of Only RAG?
-
-A conventional RAG system generally follows a predefined workflow:
-
-```text
-Query → Retrieve → Generate
-```
-
-An AI agent introduces a decision-making layer:
-
-```text
-Query
-  ↓
-Agent
-  ↓
-Decide what to do
-  ↓
-Use appropriate tools
-  ↓
-Retrieve information
-  ↓
-Analyze
-  ↓
-Generate
-```
-
-This allows the system to be extended with additional tools and research capabilities in the future.
-
-For example, additional tools could include:
-
-- Web search
-- Citation analysis
-- Paper comparison
-- Author analysis
-- Research trend analysis
-- Dataset discovery
-- Reference verification
-
----
-
-
-
-
-
-
-## 🚀 Future Enhancements
-
-- Multi-agent research workflow
-- Citation verification
-- Automatic paper comparison
-- Research trend visualization
-- Author and citation network analysis
-- Better source grounding
-- Streaming responses
-- Conversation memory
-- Multi-document reasoning
-- Research report generation
-
----
-
-## 👩‍💻 Author
-
-**Varsha T**
-
-B.E. Electronics and Communication Engineering  
-Dayananda Sagar College of Engineering, Bangalore
-
----
-
-## 🌐 Project Links
-
-**GitHub Repository:**  
-https://github.com/varshathammegowda/Research-agent
-
----
-
-## ⭐ Project Summary
-
-**AI Research Agent** is an intelligent academic research assistant that combines **AI agents, semantic retrieval, RAG, academic search, PDF processing, and LLM-based generation** to automate the research process and provide structured, context-aware research insights.
+To rebuild after code changes, run `docker compose up --build` again. ChromaDB data is persisted in `backend/data/chroma` on the host, including the existing local database.

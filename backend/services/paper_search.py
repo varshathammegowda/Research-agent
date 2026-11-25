@@ -10,7 +10,7 @@ load_dotenv()
 
 
 OPENALEX_URL = "https://api.openalex.org/works"
-MAX_OPENALEX_PAPERS = 3
+MAX_OPENALEX_PAPERS = 5
 
 OPENALEX_API_KEY = os.getenv(
     "OPENALEX_API_KEY"
