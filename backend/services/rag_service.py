@@ -1,7 +1,6 @@
 """Single-call RAG answer generation over retrieved research evidence."""
 
 import os
-import time
 
 from dotenv import load_dotenv
 from google import genai
@@ -9,7 +8,7 @@ from google import genai
 from services.embedding_service import create_embeddings
 from services.gemini_generation import generate_content
 from services.paper_search import MAX_OPENALEX_PAPERS
-from services.timing import log_process_rss, measure_stage
+from services.timing import measure_stage
 from services.vector_store import search_chunks
 
 load_dotenv()
@@ -73,13 +72,6 @@ def generate_answer(
         for source in sources
     ) or "No OpenAlex paper metadata was retrieved."
 
-    log_process_rss(
-        "before_gemini_context_construction",
-        request_id,
-        context_type="final_synthesis",
-        chunks=len(retrieved_chunks),
-        papers=len(papers),
-    )
     prompt = f"""You are an academic research assistant. Answer the question using the supplied retrieved excerpts and OpenAlex abstracts. Cite claims with the source labels shown in the context (for example [S1] or the source label attached to a retrieved excerpt). Do not invent findings, papers, authors, dates, or citations. If the evidence is insufficient, say so clearly. Keep the answer concise and academic.
 
 Question:
@@ -94,25 +86,7 @@ OpenAlex abstracts:
 Paper metadata:
 {sources_context}
 """
-    log_process_rss(
-        "after_gemini_context_construction",
-        request_id,
-        context_type="final_synthesis",
-        evidence_chars=len(evidence),
-        abstract_chars=len(abstract_context),
-        sources_chars=len(sources_context),
-        prompt_chars=len(prompt),
-    )
-
-    request_started = time.perf_counter()
-    response = None
-    response_status = "success"
     try:
-        log_process_rss(
-            "before_final_gemini_call",
-            request_id,
-            prompt_chars=len(prompt),
-        )
         with measure_stage("Final LLM generation", request_id):
             response = generate_content(
                 client,
@@ -120,31 +94,11 @@ Paper metadata:
                 model="gemini-3-flash-preview",
                 contents=prompt,
             )
-            log_process_rss(
-                "after_final_gemini_call",
-                request_id,
-                elapsed_seconds=f"{time.perf_counter() - request_started:.3f}",
-                response_chars=len(response.text or ""),
-            )
         answer = (response.text or "").strip()
         if not answer:
             answer = "The retrieved sources do not provide sufficient evidence to answer confidently."
     except Exception:
-        response_status = "error"
         raise
-    finally:
-        log_process_rss(
-            "after_gemini_response_processed",
-            request_id,
-            response_status=response_status,
-            response_chars=len(response.text or "") if response is not None else 0,
-            answer_chars=len(answer) if "answer" in locals() else 0,
-        )
-        log_process_rss(
-            "after_final_synthesis",
-            request_id,
-            elapsed_seconds=f"{time.perf_counter() - request_started:.3f}",
-        )
 
     return {
         "answer": answer,
