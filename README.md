@@ -286,34 +286,19 @@ Therefore, **RAG is a component used by the AI agent rather than the entire arch
 
 ---
 
-## 📂 Project Architecture
+## ## RAG Configuration
 
-```text
-Research-Agent/
-│
-├── frontend/
-│   ├── src/
-│   ├── components/
-│   ├── pages/
-│   └── ...
-│
-├── backend/
-│   ├── main.py
-│   ├── agent/
-│   ├── rag/
-│   ├── services/
-│   ├── utils/
-│   └── ...
-│
-├── requirements.txt
-├── package.json
-├── .env
-└── README.md
-```
+The Research Agent uses the following configuration for document chunking, embedding, and retrieval:
 
-> The exact folder structure may vary depending on the current implementation.
+| Parameter | Value |
+|---|---|
+| Chunk Size | 1000 characters |
+| Chunk Overlap | 200 characters |
+| Embedding Model | `all-MiniLM-L6-v2` |
+| Embedding Dimension | 384 |
+| Top-K Retrieved Chunks | 5 |
 
----
+These parameters control how research documents are divided into chunks, converted into vector embeddings, and retrieved during the semantic search stage.
 
 ## ⚙️ Core Components
 
